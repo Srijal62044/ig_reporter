@@ -5,11 +5,12 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Configuration
-instagram_username = "your_instagram_username"  # Replace with your Instagram username
-instagram_password = "your_instagram_password"  # Replace with your Instagram password
-target_account = "target_instagram_account"  # Replace with the username of the account to report
-num_reports = 100  # Number of times to report the account
+# Prompt for user inputs
+instagram_username = input("Enter your Instagram username: ")
+instagram_password = input("Enter your Instagram password: ")
+target_account = input("Enter the target Instagram account username: ")
+num_reports_input = input("Enter the number of reports: ")
+num_reports = int(num_reports_input)  # Convert to integer
 
 # Set up the webdriver (make sure you have ChromeDriver installed and in your PATH)
 driver = webdriver.Chrome()  # Use webdriver.Chrome() for Chrome, or adjust as needed

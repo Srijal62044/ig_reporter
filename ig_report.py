@@ -1,76 +1,61 @@
-import time
+import selenium
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
+# Get user inputs
+username = input("Enter your Instagram username: ")
+password = input("Enter your Instagram password: ")
+target_accounts = input("Enter the usernames to report, separated by commas: ").split(',')
 
-
-
-
-
-# Prompt for user inputs
-instagram_username = input("Enter your Instagram username: ")
-instagram_password = input("Enter your Instagram password: ")
-target_account = input("Enter the target Instagram account username: ")
-num_reports_input = input("Enter the number of reports: ")
-num_reports = int(num_reports_input)  # Convert to integer
-
-# Set up the webdriver (make sure you have ChromeDriver installed and in your PATH)
+# Set up Firefox options for headless mode
 options = Options()
-options.add_argument("--headless")
+options.headless = True  # Ensures it runs without a GUI, suitable for Termux
 
-service = Service("/data/data/com.termux/files/usr/bin/geckodriver")
-
-driver = webdriver.Firefox(service=service, options=options)
-
-
-
- # Use webdriver.Chrome() for Chrome, or adjust as needed
+# Initialize WebDriver with Firefox
+driver = webdriver.Firefox(options=options)  # Assumes geckodriver is installed and in PATH
 
 try:
-    # Step 1: Go to Instagram login page
-    driver.get("https://www.instagram.com/accounts/login/")
-    
-    # Step 2: Wait for the page to load and enter credentials
+    driver.get("https://www.instagram.com/")
+
+    # Wait for the login page to load
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username")))
-    username_field = driver.find_element(By.NAME, "username")
-    password_field = driver.find_element(By.NAME, "password")
-    username_field.send_keys(instagram_username)
-    password_field.send_keys(instagram_password)
-    password_field.send_keys(Keys.RETURN)
-    
-    # Step 3: Wait for login to complete
+
+    # Enter credentials and log in
+    driver.find_element(By.NAME, "username").send_keys(username)
+    driver.find_element(By.NAME, "password").send_keys(password)
+    driver.find_element(By.XPATH, "//button[@type='submit']").click()
+
+    # Wait for login to complete
     WebDriverWait(driver, 10).until(EC.url_contains("instagram.com"))
-    
-    for _ in range(num_reports):
-        # Step 4: Navigate to the target account
-        driver.get(f"https://www.instagram.com/{target_account}/")
-        
-        # Step 5: Wait for the page to load and find the report option
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'x1i10hfl') and contains(text(), 'More')]")))  # This might need adjustment based on Instagram's current HTML
-        more_options_button = driver.find_element(By.XPATH, "//div[contains(@class, 'x1i10hfl') and contains(text(), 'More')]")
-        more_options_button.click()
-        
-        # Step 6: Click on 'Report' (this is approximate; Instagram's UI changes frequently)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Report')]")))
-        report_button = driver.find_element(By.XPATH, "//div[contains(text(), 'Report')]")
+
+    for account in target_accounts:
+        account = account.strip()
+        driver.get(f"https://www.instagram.com/{account}/")
+
+        # Wait for the profile page to load
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//div[@role='button' and contains(@aria-label, 'More')]")))
+
+        # Click on the options (three dots) button
+        options_button = driver.find_element(By.XPATH, "//div[@role='button' and contains(@aria-label, 'More')]")
+        options_button.click()
+
+        # Click on the Report option
+        report_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Report') or contains(@aria-label, 'Report')]")))
         report_button.click()
-        
-        # Step 7: Select a report reason (e.g., 'It's spam')
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//div[contains(text(), \"It's spam\")]")))
-        spam_reason = driver.find_element(By.XPATH, "//div[contains(text(), \"It's spam\")]")
-        spam_reason.click()
-        
-        # Step 8: Confirm the report
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Submit')]")))
-        submit_button = driver.find_element(By.XPATH, "//div[contains(text(), 'Submit')]")
-        submit_button.click()
-        
-        # Step 9: Wait a bit to avoid rate limiting or detection
-        time.sleep(5)  # Sleep for 5 seconds between reports
-        
-        print(f"Report {_ + 1} completed.")  # Optional logging; remove if you want silence
+
+        # Select a report reason (e.g., "It's spam")
+        reason_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'It’s spam')]")))
+        reason_button.click()
+
+        # Confirm the report
+        confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Report') or contains(@aria-label, 'Report')]")))
+        confirm_button.click()
+
+        print(f"Processed report for {account}")
 
 finally:
-    # Step 10: Clean up
     driver.quit()
+    print("Script completed.")

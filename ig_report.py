@@ -1,9 +1,13 @@
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+
+
 
 # Prompt for user inputs
 instagram_username = input("Enter your Instagram username: ")
@@ -13,7 +17,15 @@ num_reports_input = input("Enter the number of reports: ")
 num_reports = int(num_reports_input)  # Convert to integer
 
 # Set up the webdriver (make sure you have ChromeDriver installed and in your PATH)
-driver = webdriver.Chrome()  # Use webdriver.Chrome() for Chrome, or adjust as needed
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument("--disable-gpu")
+
+service = Service("/data/data/com.termux/files/usr/bin/chromedriver")
+
+driver = webdriver.Chrome(service=service, options=chrome_options) # Use webdriver.Chrome() for Chrome, or adjust as needed
 
 try:
     # Step 1: Go to Instagram login page
